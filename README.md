@@ -32,6 +32,52 @@ ___________
 ##  Реализация:
 
 ### 1. Анализатор логов:
+#### 1.x Файл конфигурации:
+Файл конфигурации анализатора лога имеет следующий вид.
+```ini
+[INIT]
+REPORT_SIZE = 1000
+REPORT_DIR = reports
+LOG_DIR = log
+LOG_FILE = my_log_0001.log
+```
+С помощью указанных параметров задаются условия работы программы. В случае отсутствия одного из значений - будет использован параметр по умолчанию.
+Также, при помощи ключа "--config" может быть задан любой другой файл конфигурацией, но с аналогичной внутренней структурой.
+
+#### 1.x Запуск анализатора:
+Запуск анализатора может быть выполнен при помощи двух команд:
+```bash
+python3 main.py
+```
+```bash
+make run
+```
+При наличии файла лога с последней, для которого отсуствует соотвествующий report - вы полняется анализ и генерация отчета. Если файлу лога соотвествует файл отчета с той же датой - повторная работа не выполняется.
+```
+Logger start with cfg LOG=my_log_0001.log
+{"level": "info", "timestamp": "2025-04-26 18:36:03", "msg": "Last log is log/nginx-access-ui.log-20250130.gz"}
+.gz
+{"level": "info", "timestamp": "2025-04-26 18:36:03", "msg": "Get log in zip type..."}
+{"report_name": "reports/report-2025.01.30.html", "level": "info", "timestamp": "2025-04-26 18:36:10", "msg": "Report success created!"}
+```
+Логи реализованы через structlog и пишутся в файл, если соответсвующий параметр есть в файле конфигурации, а так же выводятся в stdout.
+
+#### 1.x Тесторование:
+В рамках задачи реализовано демонстрационное тестирование логики работы. Тестирование может быть запущено посредством команды ```poetry run pytest -v .```
+Получаем результат:
+```
+platform linux -- Python 3.12.3, pytest-8.3.5, pluggy-1.5.0 -- /home/davydov/PycharmProjects/Python-2025-01-HW01/.venv/bin/python
+cachedir: .pytest_cache
+rootdir: /home/davydov/PycharmProjects/Python-2025-01-HW01
+configfile: pyproject.toml
+plugins: anyio-4.9.0, cov-6.1.1
+collected 3 items
+
+tests/test_app.py::test_check_extension PASSED                                                                                                                                                                                                 [ 33%]
+tests/test_app.py::test_parser_string PASSED                                                                                                                                                                                                   [ 66%]
+tests/test_app.py::test_calc_table PASSED                                                                                                                                                                                                      [100%]
+```
+
 
 ### 2. Оформление:
 #### 2.x Makefile:
@@ -75,9 +121,6 @@ repos:
     rev: 'v1.15.0'  # Use the sha / tag you want to point at
     hooks:
       - id: mypy
-        args:
-          "--explicit-package-bases"
-          "--no-namespace-packages"
 
 -   repo: https://github.com/pycqa/flake8
     rev: 7.2.0  # Pastikan Anda menggunakan versi flake8 terbaru
@@ -88,10 +131,13 @@ repos:
     rev: 1.0.0
     hooks:
     - id: pytest
+      entry: pytest
+      language: python
+      types: [python]
+      require_serial: true
       pass_filenames: false
       always_run: true
-      args:
-        - "-vv"
+      args: [-vv]
 ```
 
 #### 2.x CI pipeline:
@@ -129,13 +175,13 @@ jobs:
         run: poetry run black --check .
 
       - name: Run MyPy
-        run: poetry run mypy --explicit-package-bases .
+        run: poetry run mypy .
 
       - name: Run isort
         run: poetry run isort .
 
       - name: Run Pytest
-        run: poetry run pytest -vv .
+        run: poetry run pytest -v .
 ```
 
 
@@ -177,12 +223,19 @@ include_trailing_comma = true
 use_parentheses = true
 ensure_newline_before_comments = true
 
+[tool.pytest.ini_options]
+pythonpath = [
+  ".", "src",
+]
+
 [tool.mypy]
 exclude = [
     'venv',
 ]
+no_namespace_packages = true
 
 [[tool.mypy.overrides]]
 module = ["untyped_package.*"]
 follow_untyped_imports = true
+ignore_missing_imports = true
 ```

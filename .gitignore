@@ -84,10 +84,6 @@ celerybeat-schedule
 venv/
 ENV/
 
-# big folders
-log/
-reports/
-
 # Spyder project settings
 .spyderproject
 
