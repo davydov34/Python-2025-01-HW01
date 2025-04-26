@@ -1,0 +1,52 @@
+[project]
+name = "python-2025-01-hw01"
+version = "0.1.0"
+description = ""
+authors = [
+    {name = "Your Name",email = "you@example.com"}
+]
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "black (>=25.1.0,<26.0.0)",
+    "isort (>=6.0.1,<7.0.0)",
+    "mypy (>=1.15.0,<2.0.0)",
+    "pytest (>=8.3.5,<9.0.0)",
+    "structlog (>=25.2.0,<26.0.0)",
+    "pytest-cov (>=6.1.1,<7.0.0)",
+    "pre-commit (>=4.2.0,<5.0.0)",
+    "flake8 (>=7.2.0,<8.0.0)",
+]
+
+[tool.poetry]
+package-mode = false
+
+[tool.black]
+line-length = 88
+skip-magic-trailing-comma = false
+skip-string-normalization = false
+target-version = ['py310','py311','py312']
+
+[tool.isort]
+profile = "black"
+line_length = 88
+multi_line_output = 3
+include_trailing_comma = true
+use_parentheses = true
+ensure_newline_before_comments = true
+
+[tool.pytest.ini_options]
+pythonpath = [
+  ".", "src",
+]
+
+[tool.mypy]
+exclude = [
+    'venv',
+]
+no_namespace_packages = true
+
+[[tool.mypy.overrides]]
+module = ["untyped_package.*"]
+follow_untyped_imports = true
+ignore_missing_imports = true
