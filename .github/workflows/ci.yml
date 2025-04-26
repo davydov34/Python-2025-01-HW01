@@ -31,7 +31,7 @@ jobs:
         run: poetry run black --check .
 
       - name: Run MyPy
-        run: poetry run mypy --explicit-package-bases .
+        run: poetry run mypy .
 
       - name: Run isort
         run: poetry run isort .
