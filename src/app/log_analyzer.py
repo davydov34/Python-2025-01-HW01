@@ -6,7 +6,6 @@ import datetime
 import gzip
 import os
 import re
-import shutil
 import sys
 from os.path import isfile, join
 
@@ -17,19 +16,20 @@ config = {"REPORT_SIZE": 1000, "REPORT_DIR": "reports", "LOG_DIR": "log"}
 
 
 def read_log(file, is_archive: bool, config) -> dict:
+    output_json = dict()
     if is_archive:
         try:
-            with gzip.open(file, "rb") as file_in:
-                with open("parsing.log", "wb") as file_out:
-                    shutil.copyfileobj(file_in, file_out)
+            with gzip.open(file, "rt", encoding="utf-8") as zip_file:
+                output_json = forming_dataset(file_in=zip_file, config=config)
         except:
-            logger_app.exception("Ошибка открытия лог-файла!")
-
-        output_json = forming_dataset(file_in="parsing.log", config=config)
-        os.remove("parsing.log")
-        return output_json
+            logger_app.exception("Error in reading zip  log-file!")
     else:
-        return forming_dataset(file_in=file, config=config)
+        try:
+            with open(file, "r") as txt_file:
+                output_json = forming_dataset(file_in=txt_file, config=config)
+        except:
+            logger_app.exception("Error in reading plain text lof-file!")
+    return output_json
 
 
 def run_analyze(cfg):
@@ -64,19 +64,23 @@ def run_analyze(cfg):
     date_log = max(str_date_dict.values())
     list_reports = os.listdir(config["REPORT_DIR"])
     if not list_reports:
-        list_reports.append("19700101")
-
-    last_report = max(
-        [
-            (datetime.datetime.strptime("".join(re.findall(r"\d+", f)), "%Y%m%d"))
-            for f in list_reports
-        ]
-    )
-
-    if date_log == last_report:
-        logger_app.info("Not data for execute...")
-    else:
+        logger_app.info("Directory with reports is empty.")
         table_json = read_log(
             file=last_log, is_archive=check_extension(last_log), config=config
         )
         create_html(table_json, config["REPORT_DIR"], date_log)
+    else:
+        last_report = max(
+            [
+                (datetime.datetime.strptime("".join(re.findall(r"\d+", f)), "%Y%m%d"))
+                for f in list_reports
+            ]
+        )
+
+        if date_log == last_report:
+            logger_app.info("Not data for execute...")
+        else:
+            table_json = read_log(
+                file=last_log, is_archive=check_extension(last_log), config=config
+            )
+            create_html(table_json, config["REPORT_DIR"], date_log)

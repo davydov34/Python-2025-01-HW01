@@ -111,24 +111,23 @@ def forming_dataset(file_in, config):
     unparsed_str = 0
     sum_time = 0.0
 
-    with open(file_in, "r", encoding="utf-8") as file:
-        while True:
-            line = file.readline()
-            if not line:
-                break
-            sum_requests += 1
-            line = parser_string(line)
-            if line == "UNPARSED":
-                unparsed_str += 1
-                continue
+    while True:
+        line = file_in.readline()
+        if not line:
+            break
+        sum_requests += 1
+        line = parser_string(line)
+        if line == "UNPARSED":
+            unparsed_str += 1
+            continue
 
-            sum_time += line["time"]
+        sum_time += line["time"]
 
-            if line["url"] in dataset:
-                dataset[line["url"]].append(line["time"])
-            else:
-                dataset[line["url"]] = []
-                dataset[line["url"]].append(line["time"])
+        if line["url"] in dataset:
+            dataset[line["url"]].append(line["time"])
+        else:
+            dataset[line["url"]] = []
+            dataset[line["url"]].append(line["time"])
 
     return calc_table(
         dataset=dataset,
@@ -192,21 +191,16 @@ def create_html(table_json, path_reports, date_log: datetime):
         logger_app.error("Template for report not Found!")
         logger_app.exception()
     else:
-        with file_report as file:
-            html_text = file.read().replace("$table_json", table_json)
-            output_file = os.path.join(
-                path_reports, f"report-{date_log.strftime('%Y.%m.%d')}.html"
-            )
-
-            try:
-                with open(output_file, "w", encoding="utf-8") as res:
-                    res.write(html_text)
-                    logger_app.info("Report success created!", report_name=output_file)
-            except:
-                logger_app.error(
-                    "Error with writing report file!", report_name=output_file
+        try:
+            with file_report as file:
+                html_text = file.read().replace("$table_json", table_json)
+                output_file = os.path.join(
+                    path_reports, f"report-{date_log.strftime('%Y.%m.%d')}.html"
                 )
-                logger_app.exception()
 
-    # shutil.copyfile(os.path.join('src/templates/','jquery.tablesorter.min.js'), os.path.join(path_reports, 'jquery.tablesorter.min.js'))
-    # shutil.copyfileobj('templates/jquery.tablesorter.min.js', os.path.join(path_reports, 'jquery.tablesorter.min.js'))
+            with open(output_file, "w", encoding="utf-8") as res:
+                res.write(html_text)
+                logger_app.info("Report success created!", report_name=output_file)
+        except:
+            logger_app.error("Error with writing report file!", report_name=output_file)
+            logger_app.exception()
